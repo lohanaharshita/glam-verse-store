@@ -1,15 +1,16 @@
-
 import { useState } from "react";
 import QRCode from "react-qr-code";
-import { Edit, User, Mail, Phone, MapPin, ShoppingBag, LogOut } from "lucide-react";
+import { User, Mail, Phone, MapPin, ShoppingBag, LogOut } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import ProfilePicture from "@/components/profile/ProfilePicture";
 
 const Profile = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [avatar, setAvatar] = useState(user?.avatar);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -21,6 +22,12 @@ const Profile = () => {
 
   // QR code URL (redirects to Vogue fashion page as requested)
   const qrCodeUrl = "https://www.vogue.com/fashion";
+
+  // Handle avatar change
+  const handleAvatarChange = (newAvatarUrl: string) => {
+    setAvatar(newAvatarUrl);
+    // In a real app with Supabase, this would update the user's avatar in the database
+  };
 
   // Handle logout
   const handleLogout = () => {
@@ -56,23 +63,12 @@ const Profile = () => {
             {/* Sidebar */}
             <div className="bg-white rounded-lg shadow-md p-6 h-fit">
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-24 h-24 mb-4 relative">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full rounded-full object-cover border-4 border-glamup-100"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-glamup-100 flex items-center justify-center">
-                      <User size={36} className="text-glamup-600" />
-                    </div>
-                  )}
-                  <button className="absolute bottom-0 right-0 bg-glamup-600 text-white p-1 rounded-full">
-                    <Edit size={14} />
-                  </button>
-                </div>
-                <h2 className="text-xl font-medium">{user.name}</h2>
+                <ProfilePicture 
+                  avatarUrl={avatar} 
+                  userName={user.name}
+                  onAvatarChange={handleAvatarChange}
+                />
+                <h2 className="text-xl font-medium mt-4">{user.name}</h2>
                 <p className="text-gray-500 text-sm">{user.email}</p>
                 <p className="text-xs mt-1 bg-glamup-100 text-glamup-800 px-2 py-1 rounded-full">
                   {user.role === "admin" ? "Admin" : "Customer"}
