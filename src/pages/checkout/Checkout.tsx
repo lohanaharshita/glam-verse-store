@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/layout/Layout";
+import QRCode from "react-qr-code";
 
 const Checkout = () => {
   const { toast } = useToast();
@@ -119,6 +120,19 @@ const Checkout = () => {
                       UPI
                     </label>
                   </div>
+                  
+                  {paymentMethod === "upi" && (
+                    <div className="mt-4 flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg">
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <QRCode
+                          value="upi://pay?pa=merchant@upi&pn=Store&am=91.37&cu=INR"
+                          size={200}
+                          className="mx-auto"
+                        />
+                      </div>
+                      <p className="mt-4 text-sm text-gray-600">Scan with any UPI app to pay</p>
+                    </div>
+                  )}
                   
                   <div className="flex items-center">
                     <input
