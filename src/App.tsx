@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +14,9 @@ import Register from "./pages/auth/Register";
 import ProductDetails from "./pages/ProductDetails";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AddProduct from "./pages/admin/AddProduct";
+import Checkout from "./pages/checkout/Checkout";
+import Orders from "./pages/orders/Orders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +60,22 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/checkout" 
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/orders" 
+                element={
+                  <ProtectedRoute>
+                    <Orders />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Admin Routes */}
               <Route 
@@ -63,6 +83,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAdmin={true}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/add-product" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AddProduct />
                   </ProtectedRoute>
                 } 
               />
