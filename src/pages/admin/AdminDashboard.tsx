@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Package, Users, ShoppingBag, ChevronRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
@@ -44,12 +43,20 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-serif font-bold text-glamup-800">Admin Dashboard</h1>
-          <button 
-            className="btn-glamup"
-            onClick={() => navigate("/admin/add-product")}
-          >
-            Add New Product
-          </button>
+          <div className="flex space-x-4">
+            <button 
+              className="btn-glamup"
+              onClick={() => navigate("/admin/add-product")}
+            >
+              Add New Product
+            </button>
+            <button 
+              className="btn-glamup"
+              onClick={() => navigate("/admin/orders")}
+            >
+              Manage Orders
+            </button>
+          </div>
         </div>
 
         {/* Dashboard Tabs */}
@@ -91,7 +98,7 @@ const AdminDashboard = () => {
                   ? "border-b-2 border-glamup-600 text-glamup-800"
                   : "text-gray-500 hover:text-gray-700"
               }`}
-              onClick={() => setActiveTab("orders")}
+              onClick={() => navigate("/admin/orders")}
             >
               Orders
             </button>
@@ -152,7 +159,10 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-medium">Recent Orders</h2>
-              <button className="text-glamup-600 text-sm font-medium flex items-center">
+              <button 
+                className="text-glamup-600 text-sm font-medium flex items-center"
+                onClick={() => navigate("/admin/orders")}
+              >
                 View All
                 <ChevronRight size={16} className="ml-1" />
               </button>

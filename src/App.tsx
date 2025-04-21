@@ -15,6 +15,7 @@ import ProductDetails from "./pages/ProductDetails";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddProduct from "./pages/admin/AddProduct";
+import OrdersAdmin from "./pages/admin/OrdersAdmin";
 import Checkout from "./pages/checkout/Checkout";
 import Orders from "./pages/orders/Orders";
 import NotFound from "./pages/NotFound";
@@ -91,6 +92,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requireAdmin={true}>
                     <AddProduct />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/orders" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <OrdersAdmin />
                   </ProtectedRoute>
                 } 
               />
