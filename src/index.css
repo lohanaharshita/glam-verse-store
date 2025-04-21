@@ -4,34 +4,44 @@
 
 @layer base {
   :root {
+    /* Base colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
+    /* Card colors */
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 
+    /* Popover colors */
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Primary colors - GlamUp Purple */
+    --primary: 265 83.6% 45.9%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary colors - Lighter Purple */
+    --secondary: 267 100% 96.1%;
+    --secondary-foreground: 265 83.6% 40%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted colors */
+    --muted: 265 20% 96.1%;
+    --muted-foreground: 265 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent colors */
+    --accent: 265 40% 96.1%;
+    --accent-foreground: 265 83.6% 40%;
 
+    /* Destructive colors */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Border and input colors */
+    --border: 265 30% 91.4%;
+    --input: 265 30% 91.4%;
+    --ring: 265 83.6% 45.9%;
 
+    /* Border radius */
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
@@ -97,5 +107,89 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
   }
 }
+
+/* Custom utility classes */
+@layer utilities {
+  .glamup-heading {
+    @apply font-serif text-glamup-800 leading-tight;
+  }
+
+  .product-card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl;
+  }
+
+  .product-image-container {
+    @apply relative overflow-hidden;
+  }
+
+  .product-image {
+    @apply w-full h-64 object-cover transition-transform duration-500 ease-in-out;
+  }
+
+  .product-card:hover .product-image {
+    @apply transform scale-105;
+  }
+
+  .product-badge {
+    @apply absolute top-2 right-2 bg-glamup-600 text-white px-2 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .discount-badge {
+    @apply absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .btn-glamup {
+    @apply bg-glamup-600 hover:bg-glamup-700 text-white font-semibold py-2 px-4 rounded transition-all duration-300 ease-in-out;
+  }
+
+  .btn-glamup-outline {
+    @apply border-2 border-glamup-600 text-glamup-600 hover:bg-glamup-600 hover:text-white font-semibold py-2 px-4 rounded transition-all duration-300 ease-in-out;
+  }
+
+  .section-heading {
+    @apply text-2xl md:text-3xl font-serif font-bold mb-6 text-glamup-800 relative;
+  }
+
+  .section-heading::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-16 h-1 bg-glamup-500;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Add font imports to the head */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');

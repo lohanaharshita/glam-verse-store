@@ -52,6 +52,28 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				glamup: {
+					50: '#f5f3ff',
+					100: '#ede9fe',
+					200: '#ddd6fe',
+					300: '#c4b5fd',
+					400: '#a78bfa',
+					500: '#8b5cf6',
+					600: '#7c3aed',
+					700: '#6d28d9',
+					800: '#5b21b6',
+					900: '#4c1d95',
+				},
+				soft: {
+					green: '#F2FCE2',
+					yellow: '#FEF7CD',
+					orange: '#FEC6A1',
+					purple: '#E5DEFF',
+					pink: '#FFDEE2',
+					peach: '#FDE1D3',
+					blue: '#D3E4FD',
+					gray: '#F1F0FB',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
