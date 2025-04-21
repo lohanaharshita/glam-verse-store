@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import QRCode from "react-qr-code";
-import { User, Mail, Phone, MapPin, ShoppingBag, LogOut } from "lucide-react";
+import { User, Mail, Phone, MapPin, ShoppingBag, LogOut, Edit } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
