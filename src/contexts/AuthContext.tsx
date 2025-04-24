@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,11 +64,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: sessionData.session.user.email || '',
             role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
             avatar: profileData.avatar_url,
-            gender: profileData.gender,
-            city: profileData.city,
-            age: profileData.age,
-            budget: profileData.budget,
-            interests: profileData.interests
+            gender: profileData.gender || null,
+            city: profileData.city || null,
+            age: profileData.age || null,
+            budget: profileData.budget || null,
+            interests: profileData.interests || null
           };
 
           setUser(userData);
@@ -99,11 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email || '',
           role: session.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profile?.avatar_url,
-          gender: profile?.gender,
-          city: profile?.city,
-          age: profile?.age,
-          budget: profile?.budget,
-          interests: profile?.interests
+          gender: profile?.gender || null,
+          city: profile?.city || null,
+          age: profile?.age || null,
+          budget: profile?.budget || null,
+          interests: profile?.interests || null
         };
 
         setUser(userData);
@@ -144,11 +145,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: data.user.email || '',
           role: data.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profileData?.avatar_url,
-          gender: profileData?.gender,
-          city: profileData?.city,
-          age: profileData?.age,
-          budget: profileData?.budget,
-          interests: profileData?.interests
+          gender: profileData?.gender || null,
+          city: profileData?.city || null,
+          age: profileData?.age || null,
+          budget: profileData?.budget || null,
+          interests: profileData?.interests || null
         };
 
         setUser(userData);
@@ -224,7 +225,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('profiles')
         .update({
           name: data.name,
-          email: data.email,
           avatar_url: data.avatar,
           gender: data.gender,
           city: data.city,

@@ -172,20 +172,9 @@ const Register = () => {
     try {
       const { confirmPassword, ...userData } = formData;
       
-      // Include all profile data in the user metadata
-      const userMetadata = {
-        name: formData.name,
-        gender: formData.gender,
-        city: formData.city,
-        age: formData.age,
-        budget: formData.budget,
-        interests: formData.interests
-      };
-      
       const success = await register({
         ...userData,
-        password: formData.password,
-        metadata: userMetadata
+        password: formData.password
       });
       
       if (success) {
