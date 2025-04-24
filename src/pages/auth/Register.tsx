@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Cities for dropdown
 const CITIES = [
@@ -37,6 +37,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState(1);
+  const { toast } = useToast();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -170,15 +171,44 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...userData } = formData;
-      const success = await register(userData);
+      
+      // Include all profile data in the user metadata
+      const userMetadata = {
+        name: formData.name,
+        gender: formData.gender,
+        city: formData.city,
+        age: formData.age,
+        budget: formData.budget,
+        interests: formData.interests
+      };
+      
+      const success = await register({
+        ...userData,
+        password: formData.password,
+        metadata: userMetadata
+      });
       
       if (success) {
+        toast({
+          title: "Account created successfully!",
+          description: "Welcome to GlamUp",
+        });
         navigate("/");
       } else {
         setError("Failed to create account. Email might already be in use.");
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: "Email might already be in use or another error occurred.",
+        });
       }
     } catch (err) {
       setError("An error occurred during registration. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Registration error",
+        description: "An error occurred during registration. Please try again.",
+      });
       console.error(err);
     } finally {
       setIsLoading(false);

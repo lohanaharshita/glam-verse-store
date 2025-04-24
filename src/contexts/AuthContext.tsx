@@ -11,13 +11,18 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  gender?: string;
+  city?: string;
+  age?: number;
+  budget?: number;
+  interests?: string[];
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: Omit<User, "id"> & { password: string }) => Promise<boolean>;
+  register: (userData: Omit<User, "id"> & { password: string, metadata?: Record<string, any> }) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
   updateUserProfile: (data: Partial<User>) => Promise<boolean>;
@@ -58,7 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name: profileData.name,
             email: sessionData.session.user.email || '',
             role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
-            avatar: profileData.avatar_url
+            avatar: profileData.avatar_url,
+            gender: profileData.gender,
+            city: profileData.city,
+            age: profileData.age,
+            budget: profileData.budget,
+            interests: profileData.interests
           };
 
           setUser(userData);
@@ -89,7 +99,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           name: profile?.name,
           email: session.user.email || '',
           role: session.user.email?.includes('admin') ? 'admin' : 'user',
-          avatar: profile?.avatar_url
+          avatar: profile?.avatar_url,
+          gender: profile?.gender,
+          city: profile?.city,
+          age: profile?.age,
+          budget: profile?.budget,
+          interests: profile?.interests
         };
 
         setUser(userData);
@@ -130,7 +145,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           name: profileData?.name || data.user.email?.split('@')[0] || 'User',
           email: data.user.email || '',
           role: data.user.email?.includes('admin') ? 'admin' : 'user',
-          avatar: profileData?.avatar_url
+          avatar: profileData?.avatar_url,
+          gender: profileData?.gender,
+          city: profileData?.city,
+          age: profileData?.age,
+          budget: profileData?.budget, 
+          interests: profileData?.interests
         };
 
         setUser(userData);
@@ -145,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (
-    userData: Omit<User, "id"> & { password: string }
+    userData: Omit<User, "id"> & { password: string, metadata?: Record<string, any> }
   ): Promise<boolean> => {
     try {
       // Register user with Supabase Auth
@@ -155,7 +175,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         options: {
           data: {
             name: userData.name,
-            role: userData.role
+            role: userData.role,
+            gender: userData.gender || userData.metadata?.gender,
+            city: userData.city || userData.metadata?.city,
+            age: userData.age || userData.metadata?.age,
+            budget: userData.budget || userData.metadata?.budget,
+            interests: userData.interests || userData.metadata?.interests
           }
         }
       });
@@ -166,12 +191,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
-        // Profile will be created automatically via the database trigger we set up
+        // Manually insert profile data to ensure it's created immediately
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            name: userData.name,
+            email: userData.email,
+            gender: userData.gender || userData.metadata?.gender,
+            city: userData.city || userData.metadata?.city,
+            age: userData.age || userData.metadata?.age,
+            budget: userData.budget || userData.metadata?.budget,
+            interests: userData.interests || userData.metadata?.interests
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
+        
+        // Create user object for state
         const newUser: User = {
           id: data.user.id,
           name: userData.name,
           email: userData.email,
-          role: userData.role
+          role: userData.role,
+          gender: userData.gender || userData.metadata?.gender,
+          city: userData.city || userData.metadata?.city,
+          age: userData.age || userData.metadata?.age,
+          budget: userData.budget || userData.metadata?.budget,
+          interests: userData.interests || userData.metadata?.interests
         };
 
         setUser(newUser);
@@ -202,7 +250,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .update({
           name: data.name,
           email: data.email,
-          avatar_url: data.avatar
+          avatar_url: data.avatar,
+          gender: data.gender,
+          city: data.city,
+          age: data.age,
+          budget: data.budget,
+          interests: data.interests
         })
         .eq('id', user.id);
 
