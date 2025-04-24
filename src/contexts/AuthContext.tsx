@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,7 +7,7 @@ export type UserRole = "admin" | "user";
 
 export interface User {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   role: UserRole;
   avatar?: string;
@@ -54,8 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Create user object with Supabase data
           const userData: User = {
             id: sessionData.session.user.id,
-            name: profileData.name || sessionData.session.user.email?.split('@')[0] || 'User',
-            email: profileData.email || sessionData.session.user.email || '',
+            name: profileData.name,
+            email: sessionData.session.user.email || '',
             role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
             avatar: profileData.avatar_url
           };
@@ -85,8 +86,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const userData: User = {
           id: session.user.id,
-          name: profile?.name || session.user.email?.split('@')[0] || 'User',
-          email: profile?.email || session.user.email || '',
+          name: profile?.name,
+          email: session.user.email || '',
           role: session.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profile?.avatar_url
         };
