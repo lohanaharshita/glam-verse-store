@@ -186,6 +186,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
+        // The profile will be created automatically by the database trigger
+        // Create a user object for local state
         const newUser: User = {
           id: data.user.id,
           name: userData.name,
