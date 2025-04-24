@@ -2,39 +2,92 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/layout/Layout";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
-// Mock order data
-const MOCK_ORDERS = [
-  {
-    id: "ORD-001",
-    date: "2025-04-18",
-    status: "Delivered",
-    total: 91.37,
-    items: [
-      { id: 1, name: "Glamour Eyeshadow Palette", price: 34.99, quantity: 1 },
-      { id: 2, name: "Silk Scarf - Teal Pattern", price: 44.99, quantity: 1 }
-    ]
-  },
-  {
-    id: "ORD-002",
-    date: "2025-04-10",
-    status: "Processing",
-    total: 65.98,
-    items: [
-      { id: 3, name: "Premium Facial Serum", price: 29.99, quantity: 1 },
-      { id: 4, name: "Hydrating Face Mask Set", price: 35.99, quantity: 1 }
-    ]
-  }
-];
+// Define types based on our database structure
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  status: string;
+  total: number;
+  items: OrderItem[];
+}
 
 const Orders = () => {
   const { user } = useAuth();
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // In a real application, this would fetch from Supabase
   useEffect(() => {
-    // Simulating data fetching
-    console.log("Fetching orders for user:", user?.id);
+    const fetchOrders = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Fetch orders from Supabase
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, created_at, status, total')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (ordersError) throw ordersError;
+        
+        // For each order, fetch its items
+        const ordersWithItems = await Promise.all(
+          (ordersData || []).map(async (order) => {
+            // Fetch order items with product details
+            const { data: itemsData, error: itemsError } = await supabase
+              .from('order_items')
+              .select(`
+                id, 
+                quantity, 
+                price,
+                product_id,
+                products (name)
+              `)
+              .eq('order_id', order.id);
+              
+            if (itemsError) throw itemsError;
+            
+            // Format order items for display
+            const items: OrderItem[] = (itemsData || []).map(item => ({
+              id: item.id,
+              name: item.products?.name || 'Unknown Product',
+              price: item.price,
+              quantity: item.quantity
+            }));
+            
+            // Format the order
+            return {
+              id: order.id,
+              date: new Date(order.created_at).toISOString().split('T')[0],
+              status: order.status,
+              total: order.total,
+              items
+            };
+          })
+        );
+        
+        setOrders(ordersWithItems);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOrders();
   }, [user]);
 
   return (
@@ -42,7 +95,11 @@ const Orders = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-serif font-bold text-glamup-800 mb-8">My Orders</h1>
         
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-glamup-600" />
+          </div>
+        ) : orders.length === 0 ? (
           <div className="bg-white p-8 rounded-lg shadow-md text-center">
             <h2 className="text-xl font-medium mb-2">No Orders Yet</h2>
             <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
@@ -61,7 +118,9 @@ const Orders = () => {
                       <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                         order.status === "Delivered" 
                           ? "bg-green-100 text-green-800" 
-                          : "bg-blue-100 text-blue-800"
+                          : order.status === "Processing"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}>
                         {order.status}
                       </span>
