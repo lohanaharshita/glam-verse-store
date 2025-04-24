@@ -1,16 +1,19 @@
 
 import { useState } from "react";
 import QRCode from "react-qr-code";
-import { User, Mail, Phone, MapPin, ShoppingBag, LogOut, Edit } from "lucide-react";
+import { User, Mail, Phone, MapPin, ShoppingBag, LogOut, Edit, Loader2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import ProfilePicture from "@/components/profile/ProfilePicture";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserProfile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [avatar, setAvatar] = useState(user?.avatar);
   
   // Form state
@@ -27,7 +30,7 @@ const Profile = () => {
   // Handle avatar change
   const handleAvatarChange = (newAvatarUrl: string) => {
     setAvatar(newAvatarUrl);
-    // In a real app with Supabase, this would update the user's avatar in the database
+    // Actual saving happens in the ProfilePicture component now
   };
 
   // Handle logout
@@ -43,10 +46,39 @@ const Profile = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would update the user profile
-    setIsEditing(false);
+    setIsLoading(true);
+    
+    try {
+      // Update profile in Supabase via our AuthContext
+      const success = await updateUserProfile({
+        name: formData.name,
+      });
+
+      if (success) {
+        toast({
+          title: "Profile updated",
+          description: "Your profile information has been updated"
+        });
+        setIsEditing(false);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Update failed",
+          description: "Failed to update profile information"
+        });
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: "An error occurred while updating your profile"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!user) {
@@ -129,6 +161,7 @@ const Profile = () => {
                   <button
                     onClick={() => setIsEditing(!isEditing)}
                     className="text-glamup-600 flex items-center text-sm font-medium"
+                    disabled={isLoading}
                   >
                     <Edit size={16} className="mr-1" />
                     {isEditing ? "Cancel" : "Edit"}
@@ -149,6 +182,7 @@ const Profile = () => {
                           value={formData.name}
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-glamup-500"
+                          disabled={isLoading}
                         />
                       </div>
                       <div>
@@ -162,6 +196,7 @@ const Profile = () => {
                           value={formData.email}
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-glamup-500"
+                          disabled={true} // Email can't be changed
                         />
                       </div>
                       <div>
@@ -175,6 +210,7 @@ const Profile = () => {
                           value={formData.phone}
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-glamup-500"
+                          disabled={isLoading}
                         />
                       </div>
                       <div>
@@ -188,6 +224,7 @@ const Profile = () => {
                           value={formData.address}
                           onChange={handleChange}
                           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-glamup-500"
+                          disabled={isLoading}
                         />
                       </div>
                     </div>
@@ -195,9 +232,17 @@ const Profile = () => {
                     <div className="flex justify-end">
                       <button
                         type="submit"
-                        className="btn-glamup px-6 py-2"
+                        className="btn-glamup px-6 py-2 flex items-center"
+                        disabled={isLoading}
                       >
-                        Save Changes
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Changes'
+                        )}
                       </button>
                     </div>
                   </form>

@@ -1,5 +1,6 @@
 
-import { createContext, useState, useContext, ReactNode } from "react";
+import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define user types
 export type UserRole = "admin" | "user";
@@ -19,29 +20,10 @@ interface AuthContextType {
   register: (userData: Omit<User, "id"> & { password: string }) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
+  updateUserProfile: (data: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock user data
-const MOCK_USERS: (User & { password: string })[] = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@glamup.com",
-    password: "admin123",
-    role: "admin",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-  },
-  {
-    id: "2",
-    name: "Regular User",
-    email: "user@glamup.com",
-    password: "user123",
-    role: "user",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-  },
-];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -52,42 +34,180 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAuthenticated = !!user;
   const isAdmin = user?.role === "admin";
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would make an API call
-    const foundUser = MOCK_USERS.find(
-      (u) => u.email === email && u.password === password
-    );
+  useEffect(() => {
+    // Check if user is authenticated with Supabase
+    const fetchUserData = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        // Fetch user profile from Supabase
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', sessionData.session.user.id)
+          .single();
 
-    if (foundUser) {
-      const { password, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem("glamup_user", JSON.stringify(userWithoutPassword));
-      return true;
+        if (profileData) {
+          // Create user object with Supabase data
+          const userData: User = {
+            id: sessionData.session.user.id,
+            name: profileData.name || sessionData.session.user.email?.split('@')[0] || 'User',
+            email: sessionData.session.user.email || '',
+            role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
+            avatar: profileData.avatar_url
+          };
+
+          setUser(userData);
+          localStorage.setItem("glamup_user", JSON.stringify(userData));
+        }
+      }
+    };
+
+    fetchUserData();
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Fetch user profile when signed in
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        const userData: User = {
+          id: session.user.id,
+          name: profile?.name || session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          role: session.user.email?.includes('admin') ? 'admin' : 'user',
+          avatar: profile?.avatar_url
+        };
+
+        setUser(userData);
+        localStorage.setItem("glamup_user", JSON.stringify(userData));
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem("glamup_user");
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error("Login error:", error);
+        return false;
+      }
+
+      if (data.user) {
+        // Fetch profile data
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        const userData: User = {
+          id: data.user.id,
+          name: profileData?.name || data.user.email?.split('@')[0] || 'User',
+          email: data.user.email || '',
+          role: data.user.email?.includes('admin') ? 'admin' : 'user',
+          avatar: profileData?.avatar_url
+        };
+
+        setUser(userData);
+        localStorage.setItem("glamup_user", JSON.stringify(userData));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-    return false;
   };
 
   const register = async (
     userData: Omit<User, "id"> & { password: string }
   ): Promise<boolean> => {
-    // In a real app, this would make an API call
-    const newUser = {
-      ...userData,
-      id: `${MOCK_USERS.length + 1}`,
-    };
+    try {
+      // Register user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            role: userData.role
+          }
+        }
+      });
 
-    // Check if email already exists
-    if (MOCK_USERS.some((u) => u.email === userData.email)) {
+      if (error) {
+        console.error("Registration error:", error);
+        return false;
+      }
+
+      if (data.user) {
+        // Profile will be created automatically via the database trigger we set up
+        const newUser: User = {
+          id: data.user.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role
+        };
+
+        setUser(newUser);
+        localStorage.setItem("glamup_user", JSON.stringify(newUser));
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Registration error:", error);
       return false;
     }
-
-    // For demo purposes we'll just simulate success
-    setUser(newUser);
-    localStorage.setItem("glamup_user", JSON.stringify(newUser));
-    return true;
   };
 
-  const logout = () => {
+  const updateUserProfile = async (data: Partial<User>): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Update profile in Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: data.name !== undefined ? data.name : user.name,
+          avatar_url: data.avatar !== undefined ? data.avatar : user.avatar
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error("Profile update error:", error);
+        return false;
+      }
+
+      // Update local user state
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem("glamup_user", JSON.stringify(updatedUser));
+      
+      return true;
+    } catch (error) {
+      console.error("Profile update error:", error);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem("glamup_user");
   };
@@ -101,6 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         logout,
         isAdmin,
+        updateUserProfile
       }}
     >
       {children}
