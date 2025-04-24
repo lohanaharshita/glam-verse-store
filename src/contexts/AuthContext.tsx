@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -40,18 +39,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
         // Fetch user profile from Supabase
-        const { data: profileData } = await supabase
+        const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', sessionData.session.user.id)
           .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
 
         if (profileData) {
           // Create user object with Supabase data
           const userData: User = {
             id: sessionData.session.user.id,
             name: profileData.name || sessionData.session.user.email?.split('@')[0] || 'User',
-            email: sessionData.session.user.email || '',
+            email: profileData.email || sessionData.session.user.email || '',
             role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
             avatar: profileData.avatar_url
           };
@@ -68,16 +72,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         // Fetch user profile when signed in
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
 
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
+
         const userData: User = {
           id: session.user.id,
           name: profile?.name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || '',
+          email: profile?.email || session.user.email || '',
           role: session.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profile?.avatar_url
         };
@@ -176,6 +185,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    localStorage.removeItem("glamup_user");
+  };
+
   const updateUserProfile = async (data: Partial<User>): Promise<boolean> => {
     if (!user) return false;
     
@@ -184,8 +199,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: data.name !== undefined ? data.name : user.name,
-          avatar_url: data.avatar !== undefined ? data.avatar : user.avatar
+          name: data.name,
+          email: data.email,
+          avatar_url: data.avatar
         })
         .eq('id', user.id);
 
@@ -204,12 +220,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Profile update error:", error);
       return false;
     }
-  };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    localStorage.removeItem("glamup_user");
   };
 
   return (
