@@ -40,11 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
-    // Check if user is authenticated with Supabase
     const fetchUserData = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
-        // Fetch user profile from Supabase
         const { data: profileData, error } = await supabase
           .from('profiles')
           .select('*')
@@ -57,18 +55,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (profileData) {
-          // Create user object with Supabase data
           const userData: User = {
             id: sessionData.session.user.id,
             name: profileData.name,
             email: sessionData.session.user.email || '',
             role: sessionData.session.user.email?.includes('admin') ? 'admin' : 'user',
             avatar: profileData.avatar_url,
-            gender: profileData.gender || null,
-            city: profileData.city || null,
-            age: profileData.age || null,
-            budget: profileData.budget || null,
-            interests: profileData.interests || null
+            gender: profileData.gender,
+            city: profileData.city,
+            age: profileData.age,
+            budget: profileData.budget,
+            interests: profileData.interests
           };
 
           setUser(userData);
@@ -79,10 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     fetchUserData();
 
-    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Fetch user profile when signed in
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
@@ -100,11 +95,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email || '',
           role: session.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profile?.avatar_url,
-          gender: profile?.gender || null,
-          city: profile?.city || null,
-          age: profile?.age || null,
-          budget: profile?.budget || null,
-          interests: profile?.interests || null
+          gender: profile?.gender,
+          city: profile?.city,
+          age: profile?.age,
+          budget: profile?.budget,
+          interests: profile?.interests
         };
 
         setUser(userData);
@@ -127,10 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       });
 
-      if (error) {
-        console.error("Login error:", error);
-        return false;
-      }
+      if (error) throw error;
 
       if (data.user) {
         const { data: profileData } = await supabase
@@ -145,11 +137,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: data.user.email || '',
           role: data.user.email?.includes('admin') ? 'admin' : 'user',
           avatar: profileData?.avatar_url,
-          gender: profileData?.gender || null,
-          city: profileData?.city || null,
-          age: profileData?.age || null,
-          budget: profileData?.budget || null,
-          interests: profileData?.interests || null
+          gender: profileData?.gender,
+          city: profileData?.city,
+          age: profileData?.age,
+          budget: profileData?.budget,
+          interests: profileData?.interests
         };
 
         setUser(userData);
@@ -180,14 +172,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
 
-      if (error) {
-        console.error("Registration error:", error);
-        return false;
-      }
+      if (error) throw error;
 
       if (data.user) {
-        // The profile will be created automatically by the database trigger
-        // Create a user object for local state
+        // Profile will be created by the database trigger
         const newUser: User = {
           id: data.user.id,
           name: userData.name,
@@ -222,7 +210,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return false;
     
     try {
-      // Update profile in Supabase
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -236,12 +223,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', user.id);
 
-      if (error) {
-        console.error("Profile update error:", error);
-        return false;
-      }
+      if (error) throw error;
 
-      // Update local user state
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
       localStorage.setItem("glamup_user", JSON.stringify(updatedUser));
